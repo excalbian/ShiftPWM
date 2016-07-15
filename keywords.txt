@@ -11,6 +11,7 @@ ShiftPWM	KEYWORD1
 Start	KEYWORD2
 SetAmountOfRegisters	KEYWORD2
 PrintInterruptLoad	KEYWORD2
+PrintBuffer KEYWORD2
 OneByOneSlow	KEYWORD2
 OneByOneFast	KEYWORD2
 SetOne	KEYWORD2

@@ -33,6 +33,7 @@ public:
 	void SetAmountOfRegisters(unsigned char newAmount);
 	void SetPinGrouping(int grouping);
 	void PrintInterruptLoad(void);
+    void PrintBuffer(void);
 	void OneByOneSlow(void);
 	void OneByOneFast(void);
 	void SetOne(int pin, unsigned char value);
@@ -52,6 +53,8 @@ private:
 	void OneByOne_core(int delaytime);
 	bool IsValidPin(int pin);
 	void InitTimer1(void);
+    unsigned char btohexa_high(unsigned char b);
+    unsigned char btohexa_low(unsigned char b);
 	
 	#if defined(OCR3A)
 		// Arduino Leonardo or Micro (32u4)

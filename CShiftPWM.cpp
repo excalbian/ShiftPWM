@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "CShiftPWM.h"
 #include <Arduino.h>
+// TODO: Why is this being ignored when set in the ino file? #define SHIFTPWM_LED_RBG
 
 CShiftPWM::CShiftPWM(int timerInUse, bool noSPI, int latchPin, int dataPin, int clockPin) :  // Constants are set in initializer list
 					m_timer(timerInUse), m_noSPI(noSPI), m_latchPin(latchPin), m_dataPin(dataPin), m_clockPin(clockPin){
@@ -112,19 +113,31 @@ void CShiftPWM::SetGroupOf5(int group, unsigned char v0,unsigned char v1,unsigne
 void CShiftPWM::SetRGB(int led, unsigned char r,unsigned char g,unsigned char b, int offset){
 	int skip = 2*m_pinGrouping*(led/m_pinGrouping); // is not equal to 2*led. Division is rounded down first.
 	if(IsValidPin(led+skip+offset+2*m_pinGrouping) ){
-		m_PWMValues[led+skip+offset]					=( (unsigned int) r * m_maxBrightness)>>8;
+#ifdef SHIFTPWM_LED_RBG
+        m_PWMValues[led+skip+offset]					=( (unsigned int) r * m_maxBrightness)>>8;
+        m_PWMValues[led+skip+offset+m_pinGrouping]		=( (unsigned int) b * m_maxBrightness)>>8;
+        m_PWMValues[led+skip+offset+2*m_pinGrouping]	=( (unsigned int) g * m_maxBrightness)>>8;
+#else
+        m_PWMValues[led+skip+offset]					=( (unsigned int) r * m_maxBrightness)>>8;
 		m_PWMValues[led+skip+offset+m_pinGrouping]		=( (unsigned int) g * m_maxBrightness)>>8;
 		m_PWMValues[led+skip+offset+2*m_pinGrouping]	=( (unsigned int) b * m_maxBrightness)>>8;
-	}
+#endif
+    }
 }
 
 void CShiftPWM::SetAllRGB(unsigned char r,unsigned char g,unsigned char b){
 	for(int k=0 ; (k+3*m_pinGrouping-1) < m_amountOfOutputs; k+=3*m_pinGrouping){
 		for(int l=0; l<m_pinGrouping;l++){
-			m_PWMValues[k+l]				=	( (unsigned int) r * m_maxBrightness)>>8;
-			m_PWMValues[k+l+m_pinGrouping]	=	( (unsigned int) g * m_maxBrightness)>>8;
-			m_PWMValues[k+l+m_pinGrouping*2]	=	( (unsigned int) b * m_maxBrightness)>>8;
-		}
+#ifdef SHIFTPWM_LED_RBG
+            m_PWMValues[k+l]				=	( (unsigned int) r * m_maxBrightness)>>8;
+			m_PWMValues[k+l+m_pinGrouping]	=	( (unsigned int) b * m_maxBrightness)>>8;
+			m_PWMValues[k+l+m_pinGrouping*2]	=	( (unsigned int) g * m_maxBrightness)>>8;
+#else
+            m_PWMValues[k+l]				=	( (unsigned int) r * m_maxBrightness)>>8;
+            m_PWMValues[k+l+m_pinGrouping]	=	( (unsigned int) g * m_maxBrightness)>>8;
+            m_PWMValues[k+l+m_pinGrouping*2]	=	( (unsigned int) b * m_maxBrightness)>>8;
+#endif
+        }
 	}
 }
 
@@ -436,7 +449,36 @@ void CShiftPWM::InitTimer3(void){
 }
 #endif
 
+//Converts the upper nibble of a binary value to a hexadecimal ASCII byte.
+//For example, btohexa_high(0xAE) will return 'A'.
+unsigned char CShiftPWM::btohexa_high(unsigned char b)
+{
+    b >>= 4;
+    return (b>0x9u) ? b+'A'-10:b+'0';
+}
 
+
+//Converts the lower nibble of a binary value to a hexadecimal ASCII byte.
+//  For example, btohexa_low(0xAE) will return 'E'.
+unsigned char CShiftPWM::btohexa_low(unsigned char b)
+{
+}
+unsigned char ll(unsigned char b){
+    b &= 0x0F;
+    return (b>9u) ? b+'A'-10:b+'0';
+}
+
+void CShiftPWM::PrintBuffer(void){
+#ifdef SHIFTPWM_LED_RBG
+    Serial.println(F("LED mode RBG"));
+#else
+    Serial.println(F("LED mode RGB"));
+#endif
+    for(int k=0 ; k < m_amountOfOutputs; k++){
+        Serial.print(m_PWMValues[k], BIN);
+        Serial.print(":");
+    }
+}
 
 void CShiftPWM::PrintInterruptLoad(void){
 	//This function prints information on the interrupt settings for ShiftPWM
